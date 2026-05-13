@@ -8,7 +8,7 @@ let width, height;
 let particles = [];
 let kuchens = [];
 const numParticles = 4000;
-const numKuchens = 60;
+const numKuchens = 200;
 const noiseScale = 0.002;
 const particleSpeed = 0.6;
 
