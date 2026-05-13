@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuchen Counter - Interactive Background</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .dashboard-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 40px;
+            width: 100%;
+            max-width: 1200px;
+            /* Sorgt dafür, dass der Container stabil bleibt */
+            min-height: 200px;
+        }
+
+        .employee-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            width: 220px;
+            text-align: center;
+
+            /* Neue Steuerung für die Eingangs-Animation */
+            opacity: 0;
+            transform: scale(0.5) translateY(20px);
+            animation: scaleIn 0.8s ease forwards;
+
+            transition: transform 0.3s ease, border 0.3s ease, background 0.3s ease;
+        }
+
+        /* Verhindert Hover-Zucken während Updates */
+        .employee-card.updating {
+            pointer-events: none;
+        }
+
+        .employee-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            border: 1px solid rgba(0, 242, 255, 0.5);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .profile-img {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 15px;
+            border: 2px solid rgba(0, 242, 255, 0.3);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+            /* Stabilisiert das Bildladen */
+            aspect-ratio: 1 / 1;
+        }
+
+        .employee-name {
+            font-size: 1.1rem;
+            font-weight: 400;
+            margin: 10px 0 5px 0;
+            color: #fff;
+            text-transform: capitalize;
+        }
+
+        .employee-counter {
+            font-size: 0.85rem;
+            color: #00f2ff;
+            font-weight: 700;
+            letter-spacing: 1px;
+            /* Transition für weiches Text-Update */
+            transition: color 0.3s ease;
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.5) translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .content {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px 20px;
+            min-height: 100vh;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="bg-canvas"></canvas>
+    <canvas id="kuchen-canvas"></canvas>
+
+    <div class="content">
+        <div class="glass-panel">
+            <h2>Kuchencounter:</h2>
+            <div class="counter-number">0</div>
+        </div>
+
+        <div id="dashboard" class="dashboard-grid"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
+    <script src="app.js"></script>
+
+    <script>
+        const scriptURL = "https://script.google.com/macros/s/AKfycbwMHvUtatLRYhMsNgUb6tRZDV_BkqRkGZH1UT4AXIc3Cef3_cv21tTXHhuqy3Wrl-E/exec";
+
+        let currentDisplayTotal = 0;
+
+        function animateCounter(targetValue) {
+            const counterDisplay = document.querySelector('.counter-number');
+            const startValue = currentDisplayTotal;
+            const duration = 1500;
+            let startTime = null;
+
+            function step(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const progress = Math.min((timestamp - startTime) / duration, 1);
+                const currentValue = Math.floor(progress * (targetValue - startValue) + startValue);
+                counterDisplay.innerText = currentValue;
+
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    currentDisplayTotal = targetValue;
+                }
+            }
+            window.requestAnimationFrame(step);
+        }
+
+        async function fetchCakeData() {
+            try {
+                // Cache-Busting Zeitstempel
+                const finalURL = scriptURL + "?t=" + new Date().getTime();
+                const response = await fetch(finalURL);
+                const data = await response.json();
+
+                const dashboard = document.getElementById('dashboard');
+
+                // 1. ZUERST: Gesamtsumme berechnen und animieren
+                let totalCakes = 0;
+                data.forEach(person => {
+                    if (person.counter > 0) totalCakes += person.counter;
+                });
+                if (totalCakes !== currentDisplayTotal) {
+                    animateCounter(totalCakes);
+                }
+
+                // 2. LOGIK FÜR STABILE KARTEN-UPDATES
+                // Liste der aktuell angezeigten Karten holen
+                const existingCards = Array.from(dashboard.querySelectorAll('.employee-card'));
+                const existingNames = existingCards.map(card => card.getAttribute('data-name'));
+
+                // Neue Liste der gültigen Namen aus den Daten (Counter > 0)
+                const validNamesInData = data.filter(p => p.counter > 0).map(p => p.nameID);
+
+                // A) ENTFERNEN: Karten löschen, die nicht mehr gültig sind
+                existingCards.forEach(card => {
+                    const name = card.getAttribute('data-name');
+                    if (!validNamesInData.includes(name)) {
+                        dashboard.removeChild(card); // Karte verschwindet
+                    }
+                });
+
+                // B) AKTUALISIEREN & HINZUFÜGEN: Schleife über die neuen Daten
+                data.forEach((person, i) => {
+                    if (person.counter <= 0) return; // Überspringen
+
+                    const cleanName = person.nameID.replace(/-/g, ' ');
+                    const cakeText = `${person.counter} KUCHEN`;
+
+                    // Prüfen, ob die Person schon da ist
+                    const existingCard = dashboard.querySelector(`.employee-card[data-name="${person.nameID}"]`);
+
+                    if (existingCard) {
+                        // STABILES UPDATE: Nur die Zahl ändern, nicht die ganze Karte
+                        const counterNode = existingCard.querySelector('.employee-counter');
+                        if (counterNode && counterNode.innerText !== cakeText) {
+                            counterNode.innerText = cakeText; // Zahl ploppt lautlos um
+                        }
+                    } else {
+                        // HINZUFÜGEN: Komplett neue Karte erstellen (mit Animation)
+                        const imgURL = `https://drive.google.com/thumbnail?id=${person.driveID}&sz=w400`;
+                        const card = document.createElement('div');
+                        card.className = 'employee-card';
+                        card.setAttribute('data-name', person.nameID); // WICHTIG: Identifikator setzen
+
+                        // Sequential delay nur für GANZ NEUE Karten
+                        card.style.animationDelay = `${i * 0.15}s`;
+
+                        card.innerHTML = `
+                            <img src="${imgURL}" class="profile-img" alt="${cleanName}" onerror="this.src='https://via.placeholder.com/150/0a192f/00f2ff?text=User'">
+                            <div class="employee-name">${cleanName}</div>
+                            <div class="employee-counter">${cakeText}</div>
+                        `;
+                        dashboard.appendChild(card);
+                    }
+                });
+
+            } catch (error) {
+                console.error("Fehler beim Laden der Kuchendaten:", error);
+            }
+        }
+
+        // Partikel-Anpassung bleibt wie gehabt (app.js)
+
+        // Beim Start laden
+        fetchCakeData();
+        // Intervall bleibt auf 15 Sekunden
+        setInterval(fetchCakeData, 15000);
+    </script>
+</body>
+
+</html>

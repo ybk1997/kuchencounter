@@ -1,0 +1,109 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #020611; /* Deep sleek dark blue */
+    overflow: hidden; /* Hide scrollbars for full screen effect */
+    font-family: 'Outfit', sans-serif;
+    color: #ffffff;
+}
+
+#bg-canvas, #kuchen-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* Background trails canvas is behind */
+#bg-canvas {
+    z-index: 1;
+}
+
+/* Kuchen particle canvas is above, pointer-events none allows mouse through */
+#kuchen-canvas {
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* UI Content */
+.content {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    pointer-events: none; /* Let the mouse interact with the canvas */
+    text-align: center;
+    /* Glowy sleek text effect */
+    text-shadow: 0 0 20px rgba(0, 150, 255, 0.6), 0 0 40px rgba(0, 150, 255, 0.2);
+}
+
+@property --angle {
+    syntax: "<angle>";
+    initial-value: 0deg;
+    inherits: false;
+}
+
+@keyframes rotateBorder {
+    to { --angle: 360deg; }
+}
+
+.glass-panel {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 24px;
+    padding: 3rem 5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    pointer-events: auto; /* allow interaction with the panel itself if needed */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+}
+
+.glass-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    padding: 1px; /* width of the outline */
+    background: conic-gradient(from var(--angle), transparent 85%, rgba(255,255,255,1) 95%, #8ab4f8 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    animation: rotateBorder 8s linear infinite;
+    filter: drop-shadow(0 0 8px rgba(138, 180, 248, 0.6));
+}
+
+.glass-panel:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0, 150, 255, 0.2);
+}
+
+.glass-panel h2 {
+    font-size: 1.5rem;
+    font-weight: 200;
+    letter-spacing: 0.2rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    text-shadow: none;
+}
+
+.glass-panel .counter-number {
+    font-size: 7rem;
+    font-weight: 700;
+    letter-spacing: 0.2rem;
+    background: linear-gradient(135deg, #ffffff, #8ab4f8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 20px rgba(138, 180, 248, 0.5));
+    line-height: 1;
+}
