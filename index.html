@@ -21,6 +21,8 @@
             max-width: 1200px;
             /* Sorgt dafür, dass der Container stabil bleibt */
             min-height: 200px;
+            pointer-events: auto;
+            /* Wichtig, damit Hover/Touch auf Mobile funktioniert */
         }
 
         .employee-card {
@@ -102,6 +104,46 @@
             padding: 50px 20px;
             min-height: 100vh;
         }
+
+        /* --- MOBIL-ANPASSUNG FÜR DIE KARTEN --- */
+        @media (max-width: 600px) {
+            .dashboard-grid {
+                gap: 15px;
+                margin-top: 25px;
+                padding: 0 10px;
+            }
+
+            .employee-card {
+                width: calc(50% - 10px);
+                /* 2 Spalten auf kleinen Screens */
+                min-width: 145px;
+                padding: 15px 10px;
+                border-radius: 15px;
+            }
+
+            .profile-img {
+                width: 80px;
+                height: 80px;
+                margin-bottom: 10px;
+            }
+
+            .employee-name {
+                font-size: 0.95rem;
+                margin: 5px 0;
+            }
+
+            .employee-counter {
+                font-size: 0.75rem;
+            }
+
+            /* Einspaltig bei extrem schmalen Displays */
+            @media (max-width: 360px) {
+                .employee-card {
+                    width: 100%;
+                    max-width: 240px;
+                }
+            }
+        }
     </style>
 </head>
 
@@ -149,14 +191,12 @@
 
         async function fetchCakeData() {
             try {
-                // Cache-Busting Zeitstempel
                 const finalURL = scriptURL + "?t=" + new Date().getTime();
                 const response = await fetch(finalURL);
                 const data = await response.json();
 
                 const dashboard = document.getElementById('dashboard');
 
-                // 1. ZUERST: Gesamtsumme berechnen und animieren
                 let totalCakes = 0;
                 data.forEach(person => {
                     if (person.counter > 0) totalCakes += person.counter;
@@ -165,46 +205,35 @@
                     animateCounter(totalCakes);
                 }
 
-                // 2. LOGIK FÜR STABILE KARTEN-UPDATES
-                // Liste der aktuell angezeigten Karten holen
                 const existingCards = Array.from(dashboard.querySelectorAll('.employee-card'));
-                const existingNames = existingCards.map(card => card.getAttribute('data-name'));
-
-                // Neue Liste der gültigen Namen aus den Daten (Counter > 0)
                 const validNamesInData = data.filter(p => p.counter > 0).map(p => p.nameID);
 
-                // A) ENTFERNEN: Karten löschen, die nicht mehr gültig sind
                 existingCards.forEach(card => {
                     const name = card.getAttribute('data-name');
                     if (!validNamesInData.includes(name)) {
-                        dashboard.removeChild(card); // Karte verschwindet
+                        dashboard.removeChild(card);
                     }
                 });
 
-                // B) AKTUALISIEREN & HINZUFÜGEN: Schleife über die neuen Daten
                 data.forEach((person, i) => {
-                    if (person.counter <= 0) return; // Überspringen
+                    if (person.counter <= 0) return;
 
                     const cleanName = person.nameID.replace(/-/g, ' ');
                     const cakeText = `${person.counter} KUCHEN`;
 
-                    // Prüfen, ob die Person schon da ist
                     const existingCard = dashboard.querySelector(`.employee-card[data-name="${person.nameID}"]`);
 
                     if (existingCard) {
-                        // STABILES UPDATE: Nur die Zahl ändern, nicht die ganze Karte
                         const counterNode = existingCard.querySelector('.employee-counter');
                         if (counterNode && counterNode.innerText !== cakeText) {
-                            counterNode.innerText = cakeText; // Zahl ploppt lautlos um
+                            counterNode.innerText = cakeText;
                         }
                     } else {
-                        // HINZUFÜGEN: Komplett neue Karte erstellen (mit Animation)
                         const imgURL = `https://drive.google.com/thumbnail?id=${person.driveID}&sz=w400`;
                         const card = document.createElement('div');
                         card.className = 'employee-card';
-                        card.setAttribute('data-name', person.nameID); // WICHTIG: Identifikator setzen
+                        card.setAttribute('data-name', person.nameID);
 
-                        // Sequential delay nur für GANZ NEUE Karten
                         card.style.animationDelay = `${i * 0.15}s`;
 
                         card.innerHTML = `
@@ -221,11 +250,7 @@
             }
         }
 
-        // Partikel-Anpassung bleibt wie gehabt (app.js)
-
-        // Beim Start laden
         fetchCakeData();
-        // Intervall bleibt auf 15 Sekunden
         setInterval(fetchCakeData, 15000);
     </script>
 </body>
