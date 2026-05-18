@@ -5,14 +5,20 @@
 }
 
 body {
-    background-color: #020611; /* Deep sleek dark blue */
-    overflow: hidden; /* Hide scrollbars for full screen effect */
+    background-color: #020611;
+    /* Deep sleek dark blue */
+    overflow-x: hidden;
+    /* Verhindert horizontales Wackeln */
+    overflow-y: auto;
+    /* Aktiviert vertikales Scrollen auf Smartphones */
     font-family: 'Outfit', sans-serif;
     color: #ffffff;
 }
 
-#bg-canvas, #kuchen-canvas {
-    position: absolute;
+#bg-canvas,
+#kuchen-canvas {
+    position: fixed;
+    /* Fixiert die Hintergründe beim Scrollen */
     top: 0;
     left: 0;
     width: 100vw;
@@ -36,10 +42,15 @@ body {
     z-index: 3;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
+    /* Ordnet Elemente von oben nach unten an */
     align-items: center;
-    height: 100vh;
-    pointer-events: none; /* Let the mouse interact with the canvas */
+    min-height: 100vh;
+    /* Nutzt mindestens die Bildschirmhöhe, wächst bei Bedarf mit */
+    height: auto;
+    padding: 40px 20px;
+    pointer-events: none;
+    /* Let the mouse interact with the canvas */
     text-align: center;
     /* Glowy sleek text effect */
     text-shadow: 0 0 20px rgba(0, 150, 255, 0.6), 0 0 40px rgba(0, 150, 255, 0.2);
@@ -52,7 +63,9 @@ body {
 }
 
 @keyframes rotateBorder {
-    to { --angle: 360deg; }
+    to {
+        --angle: 360deg;
+    }
 }
 
 .glass-panel {
@@ -62,9 +75,13 @@ body {
     border-radius: 24px;
     padding: 3rem 5rem;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    pointer-events: auto; /* allow interaction with the panel itself if needed */
+    pointer-events: auto;
+    /* allow interaction with the panel itself if needed */
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     position: relative;
+    width: 100%;
+    max-width: 500px;
+    /* Verhindert übermäßige Breite auf großen Bildschirmen */
 }
 
 .glass-panel::before {
@@ -72,8 +89,9 @@ body {
     position: absolute;
     inset: 0;
     border-radius: 24px;
-    padding: 1px; /* width of the outline */
-    background: conic-gradient(from var(--angle), transparent 85%, rgba(255,255,255,1) 95%, #8ab4f8 100%);
+    padding: 1px;
+    /* width of the outline */
+    background: conic-gradient(from var(--angle), transparent 85%, rgba(255, 255, 255, 1) 95%, #8ab4f8 100%);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
@@ -106,4 +124,23 @@ body {
     -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 0 20px rgba(138, 180, 248, 0.5));
     line-height: 1;
+}
+
+/* --- HOCHSICHERHEITS-RESPONSIVENESS FÜR MOBILGERÄTE --- */
+@media (max-width: 600px) {
+    .glass-panel {
+        padding: 2rem 1.5rem;
+        /* Kompakteres Innenmaß für schmale Screens */
+        max-width: 90%;
+    }
+
+    .glass-panel h2 {
+        font-size: 1.1rem;
+        letter-spacing: 0.1rem;
+    }
+
+    .glass-panel .counter-number {
+        font-size: 4.5rem;
+        /* Skaliert die Riesenzahl auf ein handliches Maß */
+    }
 }
